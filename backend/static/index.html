@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Screener — HR Candidate Finder</title>
+    <style>
+        :root {
+            --primary: #0a66c2;
+            --primary-dark: #004182;
+            --success: #057642;
+            --warning: #b24020;
+            --bg: #f3f2ef;
+            --card: #ffffff;
+            --text: #191919;
+            --text-light: #666666;
+            --border: #e0e0e0;
+            --radius: 8px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg); color: var(--text); line-height: 1.5;
+        }
+        .app { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        .header {
+            background: var(--card); padding: 20px 30px; border-radius: var(--radius);
+            margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .header h1 { font-size: 24px; color: var(--primary-dark); }
+        .header p { color: var(--text-light); font-size: 14px; }
+        .tabs {
+            display: flex; background: var(--card); border-radius: var(--radius);
+            overflow: hidden; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .tab {
+            flex: 1; padding: 14px 20px; border: none; background: transparent;
+            font-size: 14px; font-weight: 600; cursor: pointer; color: var(--text-light);
+            border-bottom: 3px solid transparent; transition: all 0.2s;
+        }
+        .tab:hover { background: #f8f8f8; color: var(--text); }
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); background: #f0f7ff; }
+        .card {
+            background: var(--card); border-radius: var(--radius); padding: 24px;
+            margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .card h2 { font-size: 18px; margin-bottom: 16px; color: var(--primary-dark); }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+            border-radius: 6px; font-size: 14px; transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(10,102,194,0.1);
+        }
+        .form-group textarea { min-height: 120px; resize: vertical; font-family: inherit; }
+        .form-group .hint { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .btn {
+            padding: 10px 20px; border: none; border-radius: 20px; font-size: 14px;
+            font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-secondary { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+        .btn-secondary:hover { background: #f0f7ff; }
+        .btn-danger { background: #fee; color: var(--warning); border: 1px solid #fcc; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .tag-container {
+            display: flex; flex-wrap: wrap; gap: 6px; padding: 8px;
+            border: 1px solid var(--border); border-radius: 6px; min-height: 42px; align-items: center;
+        }
+        .tag-container:focus-within { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(10,102,194,0.1); }
+        .tag-container input { border: none; outline: none; flex: 1; min-width: 100px; padding: 4px; font-size: 14px; }
+        .tag {
+            display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px;
+            background: #e8f4fd; color: var(--primary); border-radius: 12px; font-size: 12px; font-weight: 500;
+        }
+        .tag .remove { background: none; border: none; color: var(--primary); cursor: pointer; font-size: 14px; padding: 0 2px; }
+        .role-item {
+            border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;
+            margin-bottom: 12px; cursor: pointer; transition: all 0.2s;
+        }
+        .role-item:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(10,102,194,0.1); }
+        .role-item.selected { border-color: var(--primary); background: #f0f7ff; }
+        .role-item h3 { font-size: 16px; margin-bottom: 4px; }
+        .role-item .meta { font-size: 12px; color: var(--text-light); }
+        .candidate-card {
+            border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;
+            margin-bottom: 12px; transition: all 0.2s;
+        }
+        .candidate-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .candidate-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .candidate-name { font-size: 16px; font-weight: 600; }
+        .candidate-headline { font-size: 13px; color: var(--text-light); }
+        .score-badge {
+            padding: 6px 14px; border-radius: 16px; font-size: 13px; font-weight: 700; white-space: nowrap;
+        }
+        .score-badge.strong { background: #e6f4ea; color: var(--success); }
+        .score-badge.good { background: #e8f4fd; color: var(--primary); }
+        .score-badge.partial { background: #fff8e1; color: #b8860b; }
+        .score-badge.weak { background: #fee; color: var(--warning); }
+        .score-breakdown { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-top: 12px; }
+        .score-item label { font-size: 11px; font-weight: 600; color: var(--text-light); text-transform: uppercase; }
+        .score-bar { height: 6px; background: #eee; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+        .score-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+        .skills-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+        .skill-tag { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+        .skill-tag.matched { background: #e6f4ea; color: var(--success); }
+        .skill-tag.missing { background: #fee; color: var(--warning); }
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-light); }
+        .empty-state h3 { margin-bottom: 8px; color: var(--text); }
+        .file-upload {
+            border: 2px dashed var(--border); border-radius: var(--radius); padding: 30px;
+            text-align: center; cursor: pointer; transition: all 0.2s;
+        }
+        .file-upload:hover { border-color: var(--primary); background: #f8fbff; }
+        .actions { display: flex; gap: 8px; margin-top: 16px; }
+        .hidden { display: none; }
+        .section-divider { margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee; }
+        @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="header">
+        <h1>LinkedIn Screener</h1>
+        <p>Screen candidates against role requirements using keyword-based scoring</p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('roles')">Define Roles</button>
+        <button class="tab" onclick="showTab('screen')">Screen Candidate</button>
+        <button class="tab" onclick="showTab('bulk')">Bulk Upload</button>
+        <button class="tab" onclick="showTab('results')">Results</button>
+    </div>
+
+    <!-- ROLES TAB -->
+    <div id="tab-roles">
+        <div class="card">
+            <h2>Create New Role</h2>
+            <form id="role-form" onsubmit="createRole(event)">
+                <div class="form-group">
+                    <label>Role Title *</label>
+                    <input type="text" id="role-title" placeholder="e.g. Senior Frontend Engineer" required>
+                </div>
+                <div class="form-group">
+                    <label>Required Skills *</label>
+                    <div class="tag-container" id="required-skills-container">
+                        <input type="text" id="required-skills-input" placeholder="Type a skill and press Enter">
+                    </div>
+                    <p class="hint">Skills the candidate must have. Press Enter or comma to add.</p>
+                </div>
+                <div class="form-group">
+                    <label>Preferred Skills</label>
+                    <div class="tag-container" id="preferred-skills-container">
+                        <input type="text" id="preferred-skills-input" placeholder="Nice-to-have skills">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Min Years Experience</label>
+                        <input type="number" id="role-min-exp" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Max Years Experience</label>
+                        <input type="number" id="role-max-exp" min="0" placeholder="Leave empty for no max">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" id="role-location" placeholder="e.g. Bangalore, India">
+                    </div>
+                    <div class="form-group">
+                        <label>Education</label>
+                        <input type="text" id="role-education" placeholder="e.g. B.Tech, MBA">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Keywords</label>
+                    <div class="tag-container" id="keywords-container">
+                        <input type="text" id="keywords-input" placeholder="Additional keywords (e.g. startup, fintech)">
+                    </div>
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn btn-primary">Create Role</button>
+                </div>
+            </form>
+        </div>
+        <div class="card">
+            <h2>Saved Roles (<span id="role-count">0</span>)</h2>
+            <div id="roles-list">
+                <div class="empty-state"><h3>No roles defined yet</h3><p>Create a role above to start screening candidates</p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN TAB -->
+    <div id="tab-screen" class="hidden">
+        <div class="card">
+            <h2>Screen a Candidate</h2>
+            <p style="color:#666;margin-bottom:16px;font-size:14px">Paste a LinkedIn profile text below to score the candidate against a role.</p>
+            <div class="form-group">
+                <label>Select Role *</label>
+                <select id="screen-role-select"><option value="">-- Select a role --</option></select>
+            </div>
+            <div class="form-group">
+                <label>LinkedIn Profile Text *</label>
+                <textarea id="profile-text" style="min-height:200px" placeholder="Paste the candidate's LinkedIn profile here. Example format:
+
+John Smith
+Senior Software Engineer at Google
+Bangalore, India
+
+5 years of experience in software development
+
+Skills: Python, React, AWS, Docker, Machine Learning
+
+Education: B.Tech in Computer Science, IIT Delhi
+
+Experience:
+- Software Engineer at Google (2020-present)
+- Junior Developer at Startup (2018-2020)"></textarea>
+                <p class="hint">Copy text from a LinkedIn profile page. Include name, headline, skills, experience, and education.</p>
+            </div>
+            <div class="actions">
+                <button class="btn btn-primary" onclick="screenCandidate()">Screen Candidate</button>
+                <button class="btn btn-secondary" onclick="clearScreen()">Clear</button>
+            </div>
+        </div>
+        <div id="screen-result" class="hidden"></div>
+    </div>
+
+    <!-- BULK UPLOAD TAB -->
+    <div id="tab-bulk" class="hidden">
+        <div class="card">
+            <h2>Bulk Upload Candidates</h2>
+            <p style="color:#666;margin-bottom:16px;font-size:14px">Upload a CSV file with multiple candidates to screen them all at once.</p>
+            <div class="form-group">
+                <label>Select Role *</label>
+                <select id="bulk-role-select"><option value="">-- Select a role --</option></select>
+            </div>
+            <div class="form-group">
+                <label>CSV File *</label>
+                <div class="file-upload" onclick="document.getElementById('csv-file').click()">
+                    <input type="file" id="csv-file" accept=".csv" style="display:none" onchange="updateFileName()">
+                    <p id="file-label" style="font-size:24px">📂</p>
+                    <p id="file-name">Click to select a CSV file</p>
+                </div>
+                <p class="hint" style="margin-top:8px">CSV columns: name, headline, location, skills (comma-separated), experience_years, education, profile_text</p>
+            </div>
+            <div class="actions">
+                <button class="btn btn-primary" onclick="bulkUpload()">Upload & Screen</button>
+            </div>
+        </div>
+        <div id="bulk-result" class="hidden"></div>
+        <div class="card">
+            <h2>CSV Template</h2>
+            <p style="font-size:13px;color:#666;margin-bottom:12px">Use this format for your CSV file:</p>
+            <pre style="background:#f5f5f5;padding:12px;border-radius:6px;font-size:12px;overflow:auto;white-space:pre-wrap">name,headline,location,skills,experience_years,education,profile_text
+John Smith,Senior Software Engineer,Bangalore India,"python,react,aws,docker",5,B.Tech IIT Delhi,Experienced engineer with focus on cloud
+Jane Doe,Product Manager,Mumbai India,"product management,agile,analytics,sql",7,MBA IIM Ahmedabad,Strategic PM with 7 years in SaaS</pre>
+        </div>
+    </div>
+
+    <!-- RESULTS TAB -->
+    <div id="tab-results" class="hidden">
+        <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                <h2>Screened Candidates (<span id="candidates-count">0</span>)</h2>
+                <select id="results-role-filter" onchange="loadCandidates()" style="padding:8px 12px;border-radius:6px;border:1px solid #e0e0e0">
+                    <option value="">All Roles</option>
+                </select>
+            </div>
+            <div id="candidates-list">
+                <div class="empty-state"><h3>No candidates screened yet</h3><p>Go to "Screen Candidate" or "Bulk Upload" to start</p></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const API = '';
+let roles = [];
+let requiredSkills = [];
+let preferredSkills = [];
+let keywords = [];
+
+// Tag input logic
+function setupTagInput(containerId, inputId, arr) {
+    const input = document.getElementById(inputId);
+    input.addEventListener('keydown', (e) => {
+        if ((e.key === 'Enter' || e.key === ',') && input.value.trim()) {
+            e.preventDefault();
+            const val = input.value.trim().replace(/,$/, '');
+            if (val && !arr.includes(val)) {
+                arr.push(val);
+                renderTags(containerId, inputId, arr);
+            }
+            input.value = '';
+        } else if (e.key === 'Backspace' && !input.value && arr.length) {
+            arr.pop();
+            renderTags(containerId, inputId, arr);
+        }
+    });
+}
+
+function renderTags(containerId, inputId, arr) {
+    const container = document.getElementById(containerId);
+    const input = document.getElementById(inputId);
+    container.innerHTML = '';
+    arr.forEach((tag, i) => {
+        const span = document.createElement('span');
+        span.className = 'tag';
+        span.innerHTML = `${escapeHtml(tag)} <button class="remove" onclick="removeTag('${containerId}','${inputId}',${i})">×</button>`;
+        container.appendChild(span);
+    });
+    container.appendChild(input);
+}
+
+function removeTag(containerId, inputId, index) {
+    if (containerId === 'required-skills-container') requiredSkills.splice(index, 1);
+    else if (containerId === 'preferred-skills-container') preferredSkills.splice(index, 1);
+    else if (containerId === 'keywords-container') keywords.splice(index, 1);
+    renderTags(containerId, inputId,
+        containerId === 'required-skills-container' ? requiredSkills :
+        containerId === 'preferred-skills-container' ? preferredSkills : keywords);
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// Tab navigation
+function showTab(tabId) {
+    document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.add('hidden'));
+    document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+    event.target.classList.add('active');
+    if (tabId === 'screen' || tabId === 'bulk' || tabId === 'results') {
+        loadRoles();
+    }
+    if (tabId === 'results') {
+        loadCandidates();
+    }
+}
+
+// Role CRUD
+async function loadRoles() {
+    const res = await fetch(`${API}/roles`);
+    roles = await res.json();
+    document.getElementById('role-count').textContent = roles.length;
+    renderRoles();
+    updateRoleSelects();
+}
+
+function renderRoles() {
+    const list = document.getElementById('roles-list');
+    if (roles.length === 0) {
+        list.innerHTML = '<div class="empty-state"><h3>No roles defined yet</h3><p>Create a role above to start screening</p></div>';
+        return;
+    }
+    list.innerHTML = roles.map(role => `
+        <div class="role-item">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div>
+                    <h3>${escapeHtml(role.title)}</h3>
+                    <div class="meta">${role.required_skills.length} required skills • ${role.min_years_experience}+ years${role.location ? ' • ' + escapeHtml(role.location) : ''}</div>
+                    <div class="skills-list" style="margin-top:8px">
+                        ${role.required_skills.map(s => `<span class="skill-tag matched">${escapeHtml(s)}</span>`).join('')}
+                        ${role.preferred_skills.map(s => `<span class="skill-tag" style="background:#e8f4fd;color:#0a66c2">${escapeHtml(s)}</span>`).join('')}
+                    </div>
+                </div>
+                <button class="btn btn-danger" onclick="deleteRole(${role.id})" style="font-size:12px;padding:6px 12px">Delete</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateRoleSelects() {
+    const options = '<option value="">-- Select a role --</option>' + roles.map(r => `<option value="${r.id}">${escapeHtml(r.title)}</option>`).join('');
+    document.getElementById('screen-role-select').innerHTML = options;
+    document.getElementById('bulk-role-select').innerHTML = options;
+    const filterOptions = '<option value="">All Roles</option>' + roles.map(r => `<option value="${r.id}">${escapeHtml(r.title)}</option>`).join('');
+    document.getElementById('results-role-filter').innerHTML = filterOptions;
+}
+
+async function createRole(e) {
+    e.preventDefault();
+    const role = {
+        title: document.getElementById('role-title').value,
+        required_skills: requiredSkills.slice(),
+        preferred_skills: preferredSkills.slice(),
+        min_years_experience: parseInt(document.getElementById('role-min-exp').value) || 0,
+        max_years_experience: document.getElementById('role-max-exp').value ? parseInt(document.getElementById('role-max-exp').value) : null,
+        location: document.getElementById('role-location').value || null,
+        education: document.getElementById('role-education').value || null,
+        keywords: keywords.slice()
+    };
+    if (requiredSkills.length === 0) { alert('Add at least one required skill'); return; }
+    await fetch(`${API}/roles`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(role) });
+    // Reset form
+    document.getElementById('role-form').reset();
+    requiredSkills = []; preferredSkills = []; keywords = [];
+    renderTags('required-skills-container', 'required-skills-input', requiredSkills);
+    renderTags('preferred-skills-container', 'preferred-skills-input', preferredSkills);
+    renderTags('keywords-container', 'keywords-input', keywords);
+    loadRoles();
+}
+
+async function deleteRole(id) {
+    await fetch(`${API}/roles/${id}`, { method: 'DELETE' });
+    loadRoles();
+}
+
+// Screen candidate
+async function screenCandidate() {
+    const roleId = document.getElementById('screen-role-select').value;
+    const text = document.getElementById('profile-text').value;
+    if (!roleId) { alert('Please select a role'); return; }
+    if (!text.trim()) { alert('Please paste profile text'); return; }
+
+    const res = await fetch(`${API}/candidates/screen`, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ role_id: parseInt(roleId), profile_text: text })
+    });
+    const data = await res.json();
+    renderScreenResult(data);
+}
+
+function renderScreenResult(data) {
+    const container = document.getElementById('screen-result');
+    container.classList.remove('hidden');
+    container.innerHTML = `<div class="card"><h2>Screening Result</h2>${renderCandidateCard(data, true)}</div>`;
+}
+
+function clearScreen() {
+    document.getElementById('profile-text').value = '';
+    document.getElementById('screen-result').classList.add('hidden');
+}
+
+// Bulk upload
+function updateFileName() {
+    const file = document.getElementById('csv-file').files[0];
+    if (file) {
+        document.getElementById('file-label').textContent = '📄';
+        document.getElementById('file-name').textContent = file.name;
+    }
+}
+
+async function bulkUpload() {
+    const roleId = document.getElementById('bulk-role-select').value;
+    const file = document.getElementById('csv-file').files[0];
+    if (!roleId) { alert('Please select a role'); return; }
+    if (!file) { alert('Please select a CSV file'); return; }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch(`${API}/candidates/bulk-upload?role_id=${roleId}`, { method: 'POST', body: formData });
+    const data = await res.json();
+
+    const container = document.getElementById('bulk-result');
+    container.classList.remove('hidden');
+    container.innerHTML = `<div class="card"><h2>Upload Complete</h2>
+        <p style="font-size:14px;margin-bottom:12px">Successfully screened <strong>${data.total}</strong> candidates.</p>
+        ${data.candidates.slice(0, 5).map(c => renderCandidateCard(c, false)).join('')}
+        ${data.total > 5 ? '<p style="color:#666;font-size:13px;margin-top:8px">...and more. View all in Results tab.</p>' : ''}
+    </div>`;
+}
+
+// Results
+async function loadCandidates() {
+    const roleId = document.getElementById('results-role-filter').value;
+    const url = roleId ? `${API}/candidates?role_id=${roleId}` : `${API}/candidates`;
+    const res = await fetch(url);
+    const data = await res.json();
+    document.getElementById('candidates-count').textContent = data.length;
+    const list = document.getElementById('candidates-list');
+    if (data.length === 0) {
+        list.innerHTML = '<div class="empty-state"><h3>No candidates screened yet</h3><p>Go to "Screen Candidate" or "Bulk Upload" to start</p></div>';
+        return;
+    }
+    list.innerHTML = data.map(c => renderCandidateCard(c, true)).join('');
+}
+
+function renderCandidateCard(data, showDetails) {
+    const c = data.candidate;
+    const s = data.score;
+    const badgeClass = s.recommendation === 'Strong Match' ? 'strong' : s.recommendation === 'Good Match' ? 'good' : s.recommendation === 'Partial Match' ? 'partial' : 'weak';
+    const barColor = (v) => v >= 80 ? '#057642' : v >= 60 ? '#0a66c2' : v >= 40 ? '#b8860b' : '#b24020';
+
+    return `<div class="candidate-card">
+        <div class="candidate-header">
+            <div>
+                <div class="candidate-name">${escapeHtml(c.name || 'Unknown')}
+                    ${c.experience_years > 0 ? `<span style="font-size:12px;font-weight:400;color:#666;margin-left:8px">${c.experience_years} yrs exp</span>` : ''}
+                </div>
+                <div class="candidate-headline">${escapeHtml(c.headline || '')}</div>
+                ${c.location ? `<div style="font-size:12px;color:#666;margin-top:2px">📍 ${escapeHtml(c.location)}</div>` : ''}
+            </div>
+            <span class="score-badge ${badgeClass}">${s.total_score}% — ${s.recommendation}</span>
+        </div>
+        ${showDetails ? `
+        <div class="score-breakdown">
+            ${[['Required Skills', s.skills_required_score], ['Preferred Skills', s.skills_preferred_score], ['Experience', s.experience_score], ['Location', s.location_score], ['Keywords', s.keyword_score]].map(([label, val]) => `
+                <div class="score-item">
+                    <label>${label}: ${val}%</label>
+                    <div class="score-bar"><div class="score-bar-fill" style="width:${val}%;background:${barColor(val)}"></div></div>
+                </div>
+            `).join('')}
+        </div>
+        ${s.matched_required_skills.length > 0 ? `
+            <div style="margin-top:12px">
+                <label style="font-size:11px;font-weight:600;color:#666">MATCHED SKILLS:</label>
+                <div class="skills-list">${s.matched_required_skills.map(sk => `<span class="skill-tag matched">✓ ${escapeHtml(sk)}</span>`).join('')}</div>
+            </div>` : ''}
+        ${s.missing_required_skills.length > 0 ? `
+            <div style="margin-top:8px">
+                <label style="font-size:11px;font-weight:600;color:#666">MISSING SKILLS:</label>
+                <div class="skills-list">${s.missing_required_skills.map(sk => `<span class="skill-tag missing">✗ ${escapeHtml(sk)}</span>`).join('')}</div>
+            </div>` : ''}
+        ${c.skills && c.skills.length > 0 ? `
+            <div style="margin-top:12px">
+                <label style="font-size:11px;font-weight:600;color:#666">DETECTED SKILLS:</label>
+                <div class="skills-list">${c.skills.map(sk => `<span class="tag">${escapeHtml(sk)}</span>`).join('')}</div>
+            </div>` : ''}
+        ` : ''}
+    </div>`;
+}
+
+// Init
+setupTagInput('required-skills-container', 'required-skills-input', requiredSkills);
+setupTagInput('preferred-skills-container', 'preferred-skills-input', preferredSkills);
+setupTagInput('keywords-container', 'keywords-input', keywords);
+loadRoles();
+</script>
+</body>
+</html>
