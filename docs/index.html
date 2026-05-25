@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Screener — How to Use</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #191919; line-height: 1.7; background: #f9fafb;
+        }
+        .hero {
+            background: linear-gradient(135deg, #0a66c2, #004182);
+            color: white; padding: 80px 20px; text-align: center;
+        }
+        .hero h1 { font-size: 2.8rem; margin-bottom: 12px; }
+        .hero p { font-size: 1.2rem; opacity: 0.9; max-width: 600px; margin: 0 auto 30px; }
+        .hero .btn {
+            display: inline-block; padding: 14px 32px; background: white; color: #0a66c2;
+            border-radius: 30px; text-decoration: none; font-weight: 700; font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .hero .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+        .container { max-width: 900px; margin: 0 auto; padding: 60px 20px; }
+        h2 { font-size: 2rem; color: #004182; margin-bottom: 16px; }
+        h3 { font-size: 1.3rem; color: #0a66c2; margin-bottom: 8px; }
+        .section { margin-bottom: 60px; }
+        .features {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px; margin-top: 24px;
+        }
+        .feature-card {
+            background: white; border-radius: 12px; padding: 28px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid #eee;
+        }
+        .feature-card .icon { font-size: 2rem; margin-bottom: 12px; }
+        .feature-card h3 { color: #191919; }
+        .feature-card p { color: #555; font-size: 14px; }
+        .steps { counter-reset: step; }
+        .step {
+            background: white; border-radius: 12px; padding: 28px 28px 28px 80px;
+            margin-bottom: 20px; position: relative;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid #eee;
+        }
+        .step::before {
+            counter-increment: step; content: counter(step);
+            position: absolute; left: 24px; top: 24px;
+            width: 40px; height: 40px; background: #0a66c2; color: white;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 18px;
+        }
+        .step h3 { margin-bottom: 6px; color: #191919; }
+        .step p { color: #555; font-size: 15px; }
+        .step .tip {
+            margin-top: 10px; padding: 10px 14px; background: #f0f7ff;
+            border-radius: 8px; font-size: 13px; color: #004182;
+            border-left: 3px solid #0a66c2;
+        }
+        .install-box {
+            background: #1e1e1e; color: #d4d4d4; border-radius: 10px;
+            padding: 20px 24px; font-family: 'Consolas', monospace; font-size: 14px;
+            overflow-x: auto; margin: 16px 0;
+        }
+        .install-box .comment { color: #6a9955; }
+        .install-box .cmd { color: #dcdcaa; }
+        .faq-item { margin-bottom: 20px; }
+        .faq-item summary {
+            font-weight: 600; font-size: 16px; cursor: pointer; padding: 12px 0;
+            color: #004182;
+        }
+        .faq-item p { color: #555; padding: 4px 0 12px; font-size: 15px; }
+        .footer {
+            text-align: center; padding: 40px 20px; color: #888; font-size: 13px;
+            border-top: 1px solid #eee;
+        }
+        .footer a { color: #0a66c2; text-decoration: none; }
+        .csv-example {
+            background: #f5f5f5; border-radius: 8px; padding: 16px;
+            font-family: monospace; font-size: 12px; overflow-x: auto;
+            border: 1px solid #e0e0e0; margin: 12px 0;
+        }
+        .badge {
+            display: inline-block; padding: 4px 10px; border-radius: 12px;
+            font-size: 11px; font-weight: 600; margin-right: 4px;
+        }
+        .badge-green { background: #e6f4ea; color: #057642; }
+        .badge-blue { background: #e8f4fd; color: #0a66c2; }
+        .badge-yellow { background: #fff8e1; color: #b8860b; }
+        .badge-red { background: #fee; color: #b24020; }
+        .scoring-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        .scoring-table th, .scoring-table td {
+            padding: 12px 16px; text-align: left; border-bottom: 1px solid #eee;
+        }
+        .scoring-table th { background: #f8f9fa; font-size: 13px; color: #555; }
+        .scoring-table td { font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <h1>LinkedIn Screener</h1>
+    <p>A free, simple tool for HR professionals to quickly screen candidates against job roles — no technical skills required.</p>
+    <a href="https://github.com/bagofchips16/linkedin-screener" class="btn">Get Started — It's Free</a>
+</div>
+
+<div class="container">
+
+    <!-- What is it -->
+    <div class="section">
+        <h2>What is LinkedIn Screener?</h2>
+        <p style="font-size:16px;color:#555;margin-bottom:20px">
+            LinkedIn Screener is a free tool that helps HR professionals and recruiters quickly evaluate whether
+            a candidate is a good fit for a job role. Simply define what you're looking for, paste a candidate's
+            LinkedIn profile text, and get an instant score with a detailed breakdown.
+        </p>
+        <div class="features">
+            <div class="feature-card">
+                <div class="icon">🎯</div>
+                <h3>Define Your Role</h3>
+                <p>Set up required skills, experience range, location, and keywords for any position.</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon">📋</div>
+                <h3>Paste & Score</h3>
+                <p>Copy-paste a LinkedIn profile and get an instant relevance score (0-100%).</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon">📊</div>
+                <h3>Bulk Screen</h3>
+                <p>Upload a CSV with multiple candidates and rank them all at once.</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon">🔒</div>
+                <h3>Private & Secure</h3>
+                <p>Runs on your own computer. No data is sent to any server or third party.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Installation -->
+    <div class="section">
+        <h2>How to Install (One-Time Setup)</h2>
+        <p style="color:#555;margin-bottom:16px">You only need to do this once. It takes about 2 minutes.</p>
+
+        <div class="steps">
+            <div class="step">
+                <h3>Install Python</h3>
+                <p>Download and install Python from <a href="https://python.org/downloads" target="_blank">python.org/downloads</a>. During installation, make sure to check the box that says <strong>"Add Python to PATH"</strong>.</p>
+                <div class="tip">💡 If you already have Python installed, you can skip this step.</div>
+            </div>
+            <div class="step">
+                <h3>Download the Tool</h3>
+                <p>Download the LinkedIn Screener from GitHub:</p>
+                <div class="install-box">
+                    <span class="comment"># Option 1: Using git</span><br>
+                    <span class="cmd">git clone https://github.com/bagofchips16/linkedin-screener.git</span><br><br>
+                    <span class="comment"># Option 2: Download ZIP from GitHub and extract it</span><br>
+                    <span class="comment"># Go to: github.com/bagofchips16/linkedin-screener</span><br>
+                    <span class="comment"># Click green "Code" button → "Download ZIP"</span>
+                </div>
+            </div>
+            <div class="step">
+                <h3>Install Dependencies</h3>
+                <p>Open a terminal (Command Prompt or PowerShell) in the downloaded folder and run:</p>
+                <div class="install-box">
+                    <span class="cmd">cd linkedin-screener/backend</span><br>
+                    <span class="cmd">pip install -r requirements.txt</span>
+                </div>
+            </div>
+            <div class="step">
+                <h3>Start the Tool</h3>
+                <p>Run this command to start the screener:</p>
+                <div class="install-box">
+                    <span class="cmd">python -m uvicorn main:app --port 8000</span>
+                </div>
+                <p style="margin-top:8px">Then open your browser and go to: <strong>http://localhost:8000</strong></p>
+                <div class="tip">💡 Every time you want to use the tool, just run this command from the backend folder.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How to Use -->
+    <div class="section">
+        <h2>How to Use (Step by Step)</h2>
+
+        <div class="steps">
+            <div class="step">
+                <h3>Create a Role</h3>
+                <p>Click the <strong>"Define Roles"</strong> tab. Fill in:</p>
+                <ul style="margin:8px 0 0 16px;color:#555;font-size:14px">
+                    <li><strong>Role Title</strong> — e.g. "Senior Frontend Engineer"</li>
+                    <li><strong>Required Skills</strong> — Type each skill and press Enter (e.g. React, JavaScript, CSS)</li>
+                    <li><strong>Preferred Skills</strong> — Nice-to-have skills</li>
+                    <li><strong>Experience</strong> — Min/max years required</li>
+                    <li><strong>Location</strong> — Where you want the candidate (optional)</li>
+                    <li><strong>Keywords</strong> — Extra words to look for (e.g. "startup", "SaaS")</li>
+                </ul>
+                <p style="margin-top:8px">Click <strong>"Create Role"</strong> when done.</p>
+            </div>
+
+            <div class="step">
+                <h3>Screen a Single Candidate</h3>
+                <p>Click the <strong>"Screen Candidate"</strong> tab. Then:</p>
+                <ol style="margin:8px 0 0 16px;color:#555;font-size:14px">
+                    <li>Select the role you created from the dropdown</li>
+                    <li>Go to the candidate's LinkedIn profile</li>
+                    <li>Select all the text on their profile (Ctrl+A) and copy it (Ctrl+C)</li>
+                    <li>Paste it (Ctrl+V) into the text box</li>
+                    <li>Click <strong>"Screen Candidate"</strong></li>
+                </ol>
+                <p style="margin-top:8px">You'll instantly see a score and breakdown!</p>
+            </div>
+
+            <div class="step">
+                <h3>Screen Many Candidates at Once</h3>
+                <p>Click the <strong>"Bulk Upload"</strong> tab. Prepare a CSV file (spreadsheet) with these columns:</p>
+                <div class="csv-example">name,headline,location,skills,experience_years,education,profile_text<br>
+John Smith,Senior Engineer,Bangalore,"python,react,aws",5,B.Tech IIT,Full profile text<br>
+Jane Doe,Product Manager,Mumbai,"product management,agile",7,MBA IIM,Strategic PM...</div>
+                <p style="margin-top:8px">Select your role, upload the file, and all candidates will be scored and ranked.</p>
+                <div class="tip">💡 You can create this CSV in Excel or Google Sheets — just save/export as CSV.</div>
+            </div>
+
+            <div class="step">
+                <h3>Review Results</h3>
+                <p>Click the <strong>"Results"</strong> tab to see all screened candidates ranked from best to worst match. Click on any candidate to expand their detailed score breakdown.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Understanding Scores -->
+    <div class="section">
+        <h2>Understanding the Scores</h2>
+        <p style="color:#555;margin-bottom:16px">Each candidate gets a score from 0-100% based on how well they match your role requirements.</p>
+
+        <h3 style="margin-top:24px">Score Categories</h3>
+        <table class="scoring-table">
+            <thead><tr><th>Category</th><th>Weight</th><th>What it Measures</th></tr></thead>
+            <tbody>
+                <tr><td>Required Skills</td><td><strong>40%</strong></td><td>How many must-have skills the candidate has</td></tr>
+                <tr><td>Experience</td><td><strong>25%</strong></td><td>Whether their years of experience match the range</td></tr>
+                <tr><td>Keywords</td><td><strong>15%</strong></td><td>Whether your custom keywords appear in their profile</td></tr>
+                <tr><td>Location</td><td><strong>10%</strong></td><td>Whether they're in the desired location</td></tr>
+                <tr><td>Preferred Skills</td><td><strong>10%</strong></td><td>How many nice-to-have skills they have</td></tr>
+            </tbody>
+        </table>
+
+        <h3 style="margin-top:24px">What the Ratings Mean</h3>
+        <p style="margin-top:8px">
+            <span class="badge badge-green">80-100% — Strong Match</span>
+            Excellent fit. Prioritize for interview.<br><br>
+            <span class="badge badge-blue">60-79% — Good Match</span>
+            Solid candidate. Worth considering.<br><br>
+            <span class="badge badge-yellow">40-59% — Partial Match</span>
+            Some relevant skills but gaps exist.<br><br>
+            <span class="badge badge-red">0-39% — Weak Match</span>
+            Not a good fit for this role.
+        </p>
+    </div>
+
+    <!-- Tips -->
+    <div class="section">
+        <h2>Tips for Best Results</h2>
+        <div class="steps">
+            <div class="step">
+                <h3>Be Specific with Skills</h3>
+                <p>Instead of "programming", list specific skills like "Python", "React", "SQL". The tool matches exact words.</p>
+            </div>
+            <div class="step">
+                <h3>Copy Full LinkedIn Profiles</h3>
+                <p>The more text you paste, the better the scoring. Include their About section, Experience, Skills, and Education.</p>
+            </div>
+            <div class="step">
+                <h3>Use Keywords Wisely</h3>
+                <p>Add industry terms, company types, or domain keywords like "fintech", "healthcare", "B2B SaaS" to find domain-relevant candidates.</p>
+            </div>
+            <div class="step">
+                <h3>Create Multiple Roles</h3>
+                <p>You can screen the same candidate against different roles to find the best fit across your open positions.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="section">
+        <h2>Frequently Asked Questions</h2>
+        <details class="faq-item">
+            <summary>Is my data safe?</summary>
+            <p>Yes! The tool runs entirely on your computer. No candidate data is ever sent to any external server or stored permanently. When you close the tool, all data is cleared.</p>
+        </details>
+        <details class="faq-item">
+            <summary>Do I need internet to use this?</summary>
+            <p>Only for the initial setup (downloading and installing). After that, the tool runs completely offline on your machine.</p>
+        </details>
+        <details class="faq-item">
+            <summary>Can I use this on Mac or Linux?</summary>
+            <p>Yes! The tool works on Windows, Mac, and Linux. Just make sure Python is installed.</p>
+        </details>
+        <details class="faq-item">
+            <summary>Does this access LinkedIn directly?</summary>
+            <p>No. You manually copy-paste profile text. The tool does not connect to LinkedIn or scrape any data.</p>
+        </details>
+        <details class="faq-item">
+            <summary>How accurate is the scoring?</summary>
+            <p>The tool uses keyword matching, which works well for filtering obvious matches and mismatches. It's meant to save time on initial screening — always do a human review before making hiring decisions.</p>
+        </details>
+        <details class="faq-item">
+            <summary>Is it free?</summary>
+            <p>100% free and open source. No subscriptions, no limits, no hidden costs.</p>
+        </details>
+    </div>
+</div>
+
+<div class="footer">
+    <p>Built with ❤️ for HR professionals | <a href="https://github.com/bagofchips16/linkedin-screener">View on GitHub</a> | Free & Open Source</p>
+</div>
+
+</body>
+</html>
