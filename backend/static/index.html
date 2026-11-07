@@ -134,6 +134,7 @@
         <button class="tab" onclick="showTab('screen')">Screen Candidate</button>
         <button class="tab" onclick="showTab('bulk')">Bulk Upload</button>
         <button class="tab" onclick="showTab('results')">Results</button>
+        <button class="tab" onclick="showTab('jobs')">Bangalore HR Jobs</button>
     </div>
 
     <!-- ROLES TAB -->
@@ -279,6 +280,17 @@ Jane Doe,Product Manager,Mumbai India,"product management,agile,analytics,sql",7
             </div>
         </div>
     </div>
+    <!-- JOBS TAB -->
+    <div id="tab-jobs" class="hidden">
+        <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <h2>Bangalore HR Jobs (<span id="jobs-count">0</span>)</h2>
+                <button class="btn btn-primary" id="refresh-jobs-btn" onclick="refreshJobs()">Check for new jobs</button>
+            </div>
+            <p id="jobs-status" style="font-size:13px;color:#666;margin-bottom:16px"></p>
+            <div id="jobs-list"></div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -346,6 +358,9 @@ function showTab(tabId) {
     }
     if (tabId === 'results') {
         loadCandidates();
+    }
+    if (tabId === 'jobs') {
+        loadJobs();
     }
 }
 
@@ -531,6 +546,60 @@ function renderCandidateCard(data, showDetails) {
             </div>` : ''}
         ` : ''}
     </div>`;
+}
+
+// Jobs
+function safeHref(url) {
+    return /^https?:\/\//i.test(url || '') ? url : '#';
+}
+
+async function loadJobs() {
+    const res = await fetch(`${API}/jobs`);
+    const data = await res.json();
+    document.getElementById('jobs-count').textContent = data.jobs.length;
+
+    const status = document.getElementById('jobs-status');
+    if (!data.sources_configured) {
+        status.textContent = 'No job source configured. Copy backend/.env.example to backend/.env and add an Adzuna or SerpAPI key.';
+    } else {
+        const lr = data.last_refresh || {};
+        const checked = lr.checked_at ? `Last checked ${new Date(lr.checked_at).toLocaleString()}. ` : '';
+        status.textContent = `${checked}Auto-checks every ${data.poll_minutes} min. Email alerts: ${data.email_configured ? 'on' : 'not configured'}.` +
+            (lr.errors && lr.errors.length ? ` Errors: ${lr.errors.join('; ')}` : '');
+    }
+
+    const list = document.getElementById('jobs-list');
+    if (data.jobs.length === 0) {
+        list.innerHTML = '<div class="empty-state"><h3>No matching jobs yet</h3><p>Bangalore only, 3+ years, 35 LPA+</p></div>';
+        return;
+    }
+    list.innerHTML = data.jobs.map(j => `
+        <div class="candidate-card">
+            <div class="candidate-header">
+                <div>
+                    <div class="candidate-name"><a href="${escapeHtml(safeHref(j.url))}" target="_blank" rel="noopener noreferrer" style="color:#0a66c2;text-decoration:none">${escapeHtml(j.title)}</a></div>
+                    <div class="candidate-headline">${escapeHtml(j.company)} • ${escapeHtml(j.location)}</div>
+                    <div style="font-size:12px;color:#666;margin-top:4px">${escapeHtml(j.salary_text || 'Salary not disclosed')}${j.experience_years ? ' • ' + j.experience_years + '+ yrs' : ''} • ${escapeHtml(j.source)}${j.posted ? ' • ' + escapeHtml(j.posted) : ''}</div>
+                </div>
+                <span class="score-badge ${j.score >= 80 ? 'strong' : j.score >= 60 ? 'good' : 'partial'}">Quality ${j.score}</span>
+            </div>
+            <p style="font-size:13px;color:#555;margin-top:8px">${escapeHtml(j.snippet)}</p>
+        </div>
+    `).join('');
+}
+
+async function refreshJobs() {
+    const btn = document.getElementById('refresh-jobs-btn');
+    btn.disabled = true;
+    btn.textContent = 'Checking...';
+    try {
+        const res = await fetch(`${API}/jobs/refresh`, { method: 'POST' });
+        if (!res.ok) alert((await res.json()).error || 'Refresh failed');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Check for new jobs';
+        loadJobs();
+    }
 }
 
 // Init

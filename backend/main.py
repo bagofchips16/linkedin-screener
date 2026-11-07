@@ -1,15 +1,39 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 from typing import Optional
+import asyncio
 import csv
 import io
 import os
+from contextlib import asynccontextmanager
+from config import get_settings
+import job_finder
+import job_store
 from screener import score_candidate, parse_profile_text
 
-app = FastAPI(title="LinkedIn Screener API")
+last_refresh: dict = {}
+
+
+async def _poll_jobs_forever():
+    global last_refresh
+    while True:
+        settings = get_settings()
+        last_refresh = await asyncio.to_thread(job_finder.run_refresh)
+        await asyncio.sleep(settings.poll_minutes * 60)
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    task = asyncio.create_task(_poll_jobs_forever()) if get_settings().has_sources else None
+    yield
+    if task:
+        task.cancel()
+
+
+app = FastAPI(title="LinkedIn Screener API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -170,6 +194,27 @@ async def bulk_upload(role_id: int, file: UploadFile = File(...)):
     # Sort by total score descending
     results.sort(key=lambda x: x["score"]["total_score"], reverse=True)
     return {"candidates": results, "total": len(results)}
+
+
+@app.get("/jobs")
+def list_jobs():
+    settings = get_settings()
+    return {
+        "jobs": job_store.list_jobs(),
+        "last_refresh": last_refresh,
+        "sources_configured": settings.has_sources,
+        "email_configured": settings.email_configured,
+        "poll_minutes": settings.poll_minutes,
+    }
+
+
+@app.post("/jobs/refresh")
+async def refresh_jobs():
+    global last_refresh
+    if not get_settings().has_sources:
+        return JSONResponse({"error": "No job source configured. See backend/.env.example"}, status_code=400)
+    last_refresh = await asyncio.to_thread(job_finder.run_refresh)
+    return last_refresh
 
 
 @app.get("/candidates")
